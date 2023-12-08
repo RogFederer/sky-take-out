@@ -94,6 +94,7 @@ public class DishController {
 
     /**
      * 启用禁用菜品信息
+     * TODO 如果某一菜品停售了，则其对应的套餐还可能会处于起售状态，后期需要采取措施改进
      * @return
      */
     @PostMapping("/status/{status}")
