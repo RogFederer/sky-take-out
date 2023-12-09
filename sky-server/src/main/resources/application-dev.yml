@@ -11,3 +11,6 @@ sky:
     access-key-secret: rNYWf97UAD7Hp70ylmtkkAkQpUOzoH
     endpoint: oss-cn-hangzhou.aliyuncs.com
     bucket-name: sky-takeout-yhr
+  redis:
+    password: 123456
+    database: 10
