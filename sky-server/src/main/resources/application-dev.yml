@@ -14,3 +14,7 @@ sky:
   redis:
     password: 123456
     database: 10
+
+  wechat:
+    appid: wx7c48ec02245f7876
+    secret: 2652c76a5dfb6f6811485d5cb6869320
