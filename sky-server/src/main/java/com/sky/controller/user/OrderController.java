@@ -2,10 +2,12 @@ package com.sky.controller.user;
 
 import com.sky.dto.OrdersPaymentDTO;
 import com.sky.dto.OrdersSubmitDTO;
+import com.sky.result.PageResult;
 import com.sky.result.Result;
 import com.sky.service.OrderService;
 import com.sky.vo.OrderPaymentVO;
 import com.sky.vo.OrderSubmitVO;
+import com.sky.vo.OrderVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
@@ -50,6 +52,36 @@ public class OrderController {
         orderService.paySuccess(ordersPaymentDTO.getOrderNumber());//绕开微信支付的逻辑，直接默认支付成功
 
         return Result.success(orderPaymentVO);
+    }
+
+    /**
+     * 历史订单查询
+     * @param page
+     * @param pageSize
+     * @param status
+     * @return
+     */
+    @ApiOperation("历史订单查询")
+    @GetMapping("/historyOrders")
+    public Result<PageResult> page(int page,int pageSize,Integer status){
+        log.info("历史订单查询:");
+        PageResult pageResult=orderService.pageQuery4User(page,pageSize,status);
+
+        return Result.success(pageResult);
+    }
+
+    /**
+     * 根据订单id查询订单详情
+     * @param id
+     * @return
+     */
+    @GetMapping("/orderDetail/{id}")
+    @ApiOperation("根据订单id查询订单详情")
+    public Result<OrderVO> details(@PathVariable Long id){
+        log.info("根据订单id查询订单详情:{}",id);
+        OrderVO orderVO=orderService.details(id);
+
+        return Result.success(orderVO);
     }
 
 }
