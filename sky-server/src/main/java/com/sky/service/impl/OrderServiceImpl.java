@@ -28,6 +28,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -213,6 +214,67 @@ public class OrderServiceImpl implements OrderService {
         orderVO.setOrderDetailList(orderDetails);
         BeanUtils.copyProperties(orders,orderVO);
         return orderVO;
+    }
+
+    /**
+     * 用户取消订单
+     * @param id
+     */
+    @Override
+    public void userCancelById(Long id) {
+        //首先校验订单是否存在
+        Orders orders=orderMapper.getById(id);
+        if(orders==null){
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+
+        //若订单状态大于2（即已接单状态及之后），则需要用户手动联系商家
+        if(orders.getStatus()>Orders.TO_BE_CONFIRMED){
+            //商家已接单，需手动联系商家取消订单
+            throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        }
+
+        Orders update_orders=new Orders();
+        update_orders.setId(orders.getId());
+        if(orders.getStatus().equals(Orders.TO_BE_CONFIRMED)){
+            //待接单状态，商家需要退款，这里略过了微信支付退款的过程，仅修改了订单状态和付款状态
+
+            update_orders.setPayStatus(Orders.REFUND);//设置支付状态为退款
+        }
+
+        update_orders.setCancelReason("用户取消");
+        update_orders.setCancelTime(LocalDateTime.now());
+        update_orders.setStatus(Orders.CANCELLED);
+
+        orderMapper.update(update_orders);
+    }
+
+    /**
+     * 再来一单
+     * @param id
+     */
+    @Override
+    public void repetition(Long id) {
+
+        Orders orders=orderMapper.getById(id);
+        List<OrderDetail> orderDetailList=orderDetailMapper.getByOrderId(orders.getId());
+
+        Long userId = BaseContext.getCurrentId();
+        //将原订单中的商品详情加入购物车中
+        List<ShoppingCart> shoppingCartList=orderDetailList.stream().map(od -> {
+            ShoppingCart shoppingCart=new ShoppingCart();
+
+            //除了id字段外全部拷贝到shoppingCart中
+            BeanUtils.copyProperties(od,shoppingCart,"id");
+
+            shoppingCart.setUserId(userId);
+            shoppingCart.setCreateTime(LocalDateTime.now());
+            return shoppingCart;
+        }).toList();
+
+        //将购物车中的商品详情批量插入到数据库
+        shoppingCartMapper.insertBatch(shoppingCartList);
+
     }
 
 }
