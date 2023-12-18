@@ -355,6 +355,67 @@ public class OrderServiceImpl implements OrderService {
 
     }
 
+    /**
+     * 取消订单
+     * @param ordersCancelDTO
+     */
+    @Override
+    public void cancel(OrdersCancelDTO ordersCancelDTO) {
+        Orders byIdOrder = orderMapper.getById(ordersCancelDTO.getId());
+        //设置订单状态为已取消
+        Orders orders=Orders.builder()
+                .id(byIdOrder.getId())
+                .status(Orders.CANCELLED)
+                .cancelReason(ordersCancelDTO.getCancelReason())
+                .cancelTime(LocalDateTime.now())
+                .build();
+        //若订单已支付，需要修改支付状态为已退款
+        if(byIdOrder.getPayStatus().equals(Orders.PAID)){
+            orders.setPayStatus(Orders.REFUND);
+        }
+        orderMapper.update(orders);
+    }
+
+    /**
+     * 派送订单
+     * @param id
+     */
+    @Override
+    public void delivery(Long id) {
+        Orders byIdOrder = orderMapper.getById(id);
+        //只有订单存在且状态为待派送的订单才能被派送
+        if(byIdOrder==null || !byIdOrder.getStatus().equals(Orders.CONFIRMED)){
+            throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        }else {
+            //设置订单状态为派送中
+            Orders orders=Orders.builder()
+                    .id(byIdOrder.getId())
+                    .status(Orders.DELIVERY_IN_PROGRESS)
+                    .build();
+            orderMapper.update(orders);
+        }
+    }
+
+    /**
+     * 完成订单
+     * @param id
+     */
+    @Override
+    public void complete(Long id) {
+        Orders byIdOrder=orderMapper.getById(id);
+        //只有订单存在且状态为派送中的订单才能被设置为完成
+        if(byIdOrder==null || !byIdOrder.getStatus().equals(Orders.DELIVERY_IN_PROGRESS)){
+            throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        }else {
+            //设置订单状态为已完成
+            Orders orders=Orders.builder()
+                    .id(byIdOrder.getId())
+                    .status(Orders.COMPLETED)
+                    .build();
+            orderMapper.update(orders);
+        }
+    }
+
     private List<OrderVO> getOrderVOList(Page<Orders> page){
         List<OrderVO> orderVOList=new ArrayList<>();
         List<Orders> ordersList=page.getResult();
