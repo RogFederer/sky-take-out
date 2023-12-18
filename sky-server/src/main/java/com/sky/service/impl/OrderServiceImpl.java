@@ -110,6 +110,10 @@ public class OrderServiceImpl implements OrderService {
             throw new ShoppingCartBusinessException(MessageConstant.SHOPPING_CART_IS_NULL);
         }
 
+        //根据addressBook生成address字符串
+        String address=addressBook.getProvinceName()+addressBook.getCityName()+addressBook.getDistrictName()+addressBook.getDetail();
+
+
         //向订单表插入一条数据
         Orders orders=new Orders();
         BeanUtils.copyProperties(ordersSubmitDTO,orders);
@@ -120,6 +124,8 @@ public class OrderServiceImpl implements OrderService {
         orders.setPhone(addressBook.getPhone());
         orders.setConsignee(addressBook.getConsignee());
         orders.setUserId(userId);
+
+        orders.setAddress(address);
 
         orderMapper.insert(orders);
 
